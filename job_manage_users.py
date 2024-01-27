@@ -39,9 +39,9 @@ class ManageUsers():
         }
         response = call_api_post("https://graph.microsoft.com/v1.0/users", data, self.access_token)
         if response.status_code == 201:
-            print("{}: {} {}".format("Success", "Add user", data["userPrincipalName"]))
+            print(f"Success: Add user {data["userPrincipalName"]}")
         else:
-            print("{}: {} {} {} {}".format("Error", "Add user", data["userPrincipalName"], response.status_code, response.text))
+            print(f"Error: Add user {data["userPrincipalName"]} {response.status_code} {response.text}")
             if recursive_count < 5:
                 self.add_user(recursive_count + 1) # Recursively call this function until its success
     
@@ -49,9 +49,9 @@ class ManageUsers():
     def delete_user_by_id(self, id):
         response = call_api_delete(f"https://graph.microsoft.com/v1.0/users/{id}", self.access_token)
         if response.status_code == 204:
-            print("{}: {} {}".format("Success", "Delete user", id))
+            print(f"Sucess: Delete user {id}")
         else:
-            print("{}: {} {} {} {}".format("Error", "Delete user", id, response.status_code, response.text))
+            print(f"Error: Delete user {id} {response.status_code} {response.text}")
     
     # Delete a user randomly
     def delete_a_random_user(self, recursive_count=0):
@@ -59,7 +59,7 @@ class ManageUsers():
         if not self.check_user_role(user_id):
             self.delete_user_by_id(user_id)
         else:
-            print("{}: {} {} {}".format("Error", "Delete user", user_id, "Cannot delete the Global Admin"))
+            print(f"Error: Delete user {user_id} Cannot delete the Global Admin")
             if recursive_count < 5:
                 self.delete_a_random_user(recursive_count + 1) # Recursively call this function until its success
     
@@ -81,8 +81,8 @@ class ManageUsers():
 
     @staticmethod
     def generate_random_name():
-        first_names = ["James", "Robert", "John", "Michael", "David", "William", "Richard", "Joseph", "Thomas", "Christopher", "Charles", "Daniel", "Matthew", "Anthony", "Mark", "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Lisa", "Nancy", "Betty", "Sandra", "Margaret"]
-        last_names = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzales", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson"]
+        first_names = ("James", "Robert", "John", "Michael", "David", "William", "Richard", "Joseph", "Thomas", "Christopher", "Charles", "Daniel", "Matthew", "Anthony", "Mark", "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Lisa", "Nancy", "Betty", "Sandra", "Margaret")
+        last_names = ("Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzales", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson")
         first_name = random.choice(first_names)
         last_name = random.choice(last_names)
         return {
@@ -95,10 +95,10 @@ class ManageUsers():
 
     @staticmethod
     def generate_random_phone_number():
-        first = "0" + random.choice(["3", "5", "8", "9"])
+        first = "0" + random.choice(("3", "5", "8", "9"))
         second = str(random.randint(0, 999)).zfill(3)
-        last = (str(random.randint(0, 9999)).zfill(4))
-        return "{}{}{}".format(first, second, last)
+        last = str(random.randint(0, 9999)).zfill(4)
+        return f"{first}{second}{last}"
 
     def get_random_domain(self):
         response = call_api_get("https://graph.microsoft.com/v1.0/domains", self.access_token)
@@ -120,7 +120,7 @@ class ManageUsers():
                 self.add_user()
             for _ in range(plan_to_delete):
                 self.delete_a_random_user()
-            print("Post-process user count: {} users".format(self.get_user_count()))
+            print(f"Post-process user count: {self.get_user_count()} users")
         else:
             self.run() # Recursively call this function until it meets the condition
 
