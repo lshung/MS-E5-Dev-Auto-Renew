@@ -1,0 +1,73 @@
+#Automatic call to the API to keep alive, encrypted version
+#
+name: MSO_E5_Dev_AutoRenew
+
+on: 
+  release:
+    types: [published]
+  push:
+    tags:
+    - 'v*'
+  #  branches: 
+  #    - master
+  schedule:
+    - cron: "10 */2 * * *"
+  watch:
+    types: [started]
+   
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: (github.event.repository.owner.id == github.event.sender.id) || ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}  # Self-ordered start
+    #if: github.event.repository.owner.id == github.event.sender.id  # Self-ordered start
+    name: Build and call API
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: true # otherwise, the token used is the GITHUB_TOKEN, instead of your personal access token.
+        fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
+    - name: Set up Python #Install python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+        check-latest: true
+    - name: Install requests #Installation requests
+      run: |
+        pip install requests
+    - name: Read config from secrets  #Read Secret
+      env: 
+        CONFIG_ID: ${{ secrets.CONFIG_ID }} # secrets_id prepare
+        CONFIG_KEY: ${{ secrets.CONFIG_KEY }} # secrets_key prepare
+        REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }} # refresh_token prepare
+      run: | 
+        cp main.py temp.py
+        echo $CONFIG_ID > configid.txt
+        echo $CONFIG_KEY > configkey.txt
+        echo $REFRESH_TOKEN > refreshtoken.txt
+        sed -i '10 r configid.txt' temp.py
+        sed -i '12 r configkey.txt' temp.py
+        sed -i '14 r refreshtoken.txt' temp.py
+    - name: Test Api #ApiCall
+      run: | 
+        echo `date +"%Y-%m-%d %H:%M:%S"` begin > time.log
+        python3 temp.py
+    - name: Delete secrets config #Delete secret config
+      run: | 
+        rm -f temp.py
+        rm -f configid.txt
+        rm -f configkey.txt
+        rm -f refreshtoken.txt
+        rm -f Secret.txt
+    - name: Commit #Upload a new refresh_token to the repository
+      run: |
+        git config --global user.email kjmcabangon@slsu.edu.ph
+        git config --global user.name kylierst
+        git add .
+        git commit -m "Update new refresh token with MSO_E5_Dev_AutoRenew" -a
+    - name: Push changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
+        #force_with_lease: true
